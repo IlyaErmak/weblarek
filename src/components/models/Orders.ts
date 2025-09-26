@@ -1,4 +1,6 @@
 import { PaymentMethod } from '../../types';
+import { IEvents } from '../base/Events';
+import { AppEvents } from '../../utils/constants';
 
 export interface ICustomerData {
     payment?: PaymentMethod;
@@ -16,21 +18,26 @@ export type IOrderValidationErrors = {
 
 export class Orders {
     private customer: ICustomerData = {};
+    constructor(private readonly events?: IEvents) {}
 
     setPayment(method: PaymentMethod) {
         this.customer.payment = method;
+        this.events?.emit(AppEvents.CustomerChanged, { ...this.customer });
     }
 
     setAddress(address: string) {
         this.customer.address = address;
+        this.events?.emit(AppEvents.CustomerChanged, { ...this.customer });
     }
 
     setEmail(email: string) {
         this.customer.email = email;
+        this.events?.emit(AppEvents.CustomerChanged, { ...this.customer });
     }
 
     setPhone(phone: string) {
         this.customer.phone = phone;
+        this.events?.emit(AppEvents.CustomerChanged, { ...this.customer });
     }
 
     getCustomer(): ICustomerData {
@@ -39,6 +46,7 @@ export class Orders {
 
     clear() {
         this.customer = {};
+        this.events?.emit(AppEvents.CustomerChanged, { ...this.customer });
     }
 
     validate(): IOrderValidationErrors {
