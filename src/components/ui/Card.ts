@@ -23,7 +23,6 @@ export abstract class BaseCard<TState extends BaseCardState> extends Component<T
 
   protected setCategory(element: HTMLElement | null, category?: string) {
     if (!element) return;
-    // remove previous category classes using classList
     const toRemove: string[] = [];
     element.classList.forEach((c) => {
       if (c.startsWith('card__category_')) toRemove.push(c);
