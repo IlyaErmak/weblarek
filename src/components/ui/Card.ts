@@ -1,5 +1,4 @@
 import { Component } from '../base/Component';
-import { IProduct } from '../../types';
 import { categoryMap, CDN_URL, AppEvents } from '../../utils/constants';
 import { IEvents } from '../base/Events';
 
@@ -15,23 +14,21 @@ export interface BaseCardState {
 
 export abstract class BaseCard<TState extends BaseCardState> extends Component<TState> {
   protected events: IEvents;
-  protected product?: IProduct;
+  protected productId?: string;
 
   protected constructor(container: HTMLElement, events: IEvents) {
     super(container);
     this.events = events;
   }
 
-  setProduct(product: IProduct) {
-    this.product = product;
-  }
-
   protected setCategory(element: HTMLElement | null, category?: string) {
     if (!element) return;
-    element.className = element.className
-      .split(' ')
-      .filter((c) => !c.startsWith('card__category_'))
-      .join(' ');
+    // remove previous category classes using classList
+    const toRemove: string[] = [];
+    element.classList.forEach((c) => {
+      if (c.startsWith('card__category_')) toRemove.push(c);
+    });
+    toRemove.forEach((c) => element.classList.remove(c));
     if (category && categoryMap[category as keyof typeof categoryMap]) {
       element.classList.add(categoryMap[category as keyof typeof categoryMap]);
     }
@@ -57,21 +54,22 @@ export class CatalogCard extends BaseCard<BaseCardState> {
     this.priceEl = this.container.querySelector('.card__price') as HTMLElement;
 
     this.container.addEventListener('click', () => {
-      if (!this.product) return;
-      this.events.emit(AppEvents.CardSelected, { id: this.product.id });
+      if (!this.productId) return;
+      this.events.emit(AppEvents.CardSelected, { id: this.productId });
     });
   }
 
   render(data?: Partial<BaseCardState>) {
     super.render(data);
-    if (this.product) {
-      this.titleEl.textContent = this.product.title;
+    if (data) {
+      if (data.id) this.productId = data.id;
+      if (data.title !== undefined) this.titleEl.textContent = String(data.title);
       const canUseCdn = CDN_URL && !String(CDN_URL).startsWith('undefined');
-      if (canUseCdn) {
-        this.setImage(this.imageEl, `${CDN_URL}${this.product.image}`, this.product.title);
+      if (canUseCdn && data.image) {
+        this.setImage(this.imageEl, `${CDN_URL}${data.image}`, String(data.title ?? ''));
       }
-      this.setCategory(this.categoryEl, this.product.category);
-      this.priceEl.textContent = this.product.price === null ? 'Бесценно' : this.formatPrice(this.product.price);
+      this.setCategory(this.categoryEl, data.category);
+      this.priceEl.textContent = this.formatPrice(data.price);
     }
     return this.container;
   }
@@ -95,8 +93,8 @@ export class PreviewCard extends BaseCard<BaseCardState> {
     this.buttonEl = this.container.querySelector('.card__button') as HTMLButtonElement;
 
     this.buttonEl.addEventListener('click', () => {
-      if (!this.product) return;
-      this.events.emit(AppEvents.BuyClicked, { id: this.product.id });
+      if (!this.productId) return;
+      this.events.emit(AppEvents.BuyClicked, { id: this.productId });
     });
   }
 
@@ -111,16 +109,17 @@ export class PreviewCard extends BaseCard<BaseCardState> {
 
   render(data?: Partial<BaseCardState & { description?: string; inCart?: boolean }>) {
     super.render(data);
-    if (this.product) {
-      this.titleEl.textContent = this.product.title;
-      this.textEl.textContent = this.product.description;
+    if (data) {
+      if (data.id) this.productId = data.id;
+      if (data.title !== undefined) this.titleEl.textContent = String(data.title);
+      if (data.description !== undefined) this.textEl.textContent = String(data.description);
       const canUseCdn = CDN_URL && !String(CDN_URL).startsWith('undefined');
-      if (canUseCdn) {
-        this.setImage(this.imageEl, `${CDN_URL}${this.product.image}`, this.product.title);
+      if (canUseCdn && data.image) {
+        this.setImage(this.imageEl, `${CDN_URL}${data.image}`, String(data.title ?? ''));
       }
-      this.setCategory(this.categoryEl, this.product.category);
-      this.priceEl.textContent = this.product.price === null ? 'Бесценно' : this.formatPrice(this.product.price);
-      this.setDisabledUnavailable(this.product.price === null);
+      this.setCategory(this.categoryEl, data.category);
+      this.priceEl.textContent = this.formatPrice(data.price);
+      this.setDisabledUnavailable(data.price === null);
     }
     if (data?.inCart !== undefined) {
       this.setInCart(Boolean(data.inCart));
@@ -143,17 +142,18 @@ export class BasketCard extends BaseCard<BaseCardState & { index: number }> {
     this.deleteBtn = this.container.querySelector('.basket__item-delete') as HTMLButtonElement;
 
     this.deleteBtn.addEventListener('click', () => {
-      if (!this.product) return;
-      this.events.emit(AppEvents.RemoveFromCartClicked, { id: this.product.id });
+      if (!this.productId) return;
+      this.events.emit(AppEvents.RemoveFromCartClicked, { id: this.productId });
     });
   }
 
   render(data?: Partial<BaseCardState & { index: number }>) {
     super.render(data);
-    if (this.product) {
-      this.indexEl.textContent = String((data?.index ?? 0));
-      this.titleEl.textContent = this.product.title;
-      this.priceEl.textContent = this.product.price === null ? 'Бесценно' : this.formatPrice(this.product.price);
+    if (data) {
+      if (data.id) this.productId = data.id;
+      this.indexEl.textContent = String((data.index ?? 0));
+      if (data.title !== undefined) this.titleEl.textContent = String(data.title);
+      this.priceEl.textContent = this.formatPrice(data.price);
     }
     return this.container;
   }
