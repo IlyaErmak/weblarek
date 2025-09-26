@@ -20,7 +20,6 @@ export const settings = {
 
 };
 
-<<<<<<< HEAD
 // Глобальные события приложения
 export const AppEvents = {
   // Модели
@@ -40,6 +39,3 @@ export const AppEvents = {
 } as const;
 
 export type AppEventName = typeof AppEvents[keyof typeof AppEvents];
-
-=======
->>>>>>> e0c366586eeef8d9d2e41cb1a8457f7b22bd5749
